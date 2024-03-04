@@ -5,14 +5,10 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 /**
  * This template demonstrates how to develop a test case for Hibernate ORM, using the Java Persistence API.
@@ -34,43 +30,40 @@ public class JPAUnitTestCase {
 	// Entities are auto-discovered, so just add them anywhere on class-path
 	// Add your tests, using standard JUnit.
 	@Test
-	public void hhh16595Test_v6() {
+	public void hhhXXX() {
+		long parent1Id = saveParent1();
+
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
-		initData(entityManager);
-
 		entityManager.getTransaction().begin();
-		long startTime = System.currentTimeMillis();
-		List resultList = entityManager.createQuery("select f from Fact f " +
-				" LEFT JOIN FETCH f.dimensionMembers" +
-						" WHERE f.branch=333")
-				.getResultList();
-		long endTime = System.currentTimeMillis();
-		entityManager.getTransaction().commit();
 
-		long elapsed = endTime - startTime;
-		Assert.assertTrue("executing query took: " + elapsed + ", size: " + resultList, elapsed < 60_000);
-	}
+		Parent1 parent1 = Objects.requireNonNull(entityManager.find(Parent1.class, parent1Id));
 
-	private void initData(EntityManager entityManager) {
-		entityManager.getTransaction().begin();
-		List<DimensionMember> members = new ArrayList<>();
-		SecureRandom secureRandom = new SecureRandom();
-		for (int i = 0; i < 1000; i++) {
-			DimensionMember dimensionMember = new DimensionMember();
-			dimensionMember.setId((long) i);
-			entityManager.persist(dimensionMember);
-			members.add(dimensionMember);
-		}
-		for (int i =0; i < 30_000;i++){
-			Fact fact= new Fact();
-			fact.setId((long) i);
-			fact.setBranch(333);
+		Child sharedChild = new Child();
+		sharedChild.setSomeData("someData");
 
-			fact.setDimensionMembers( secureRandom.ints(10, 0, members.size())
-					.mapToObj(members::get)
-					.collect(Collectors.toSet()));
-			entityManager.persist(fact);
-		}
+		parent1.setChild(sharedChild);
+
+		Parent2 parent2 = new Parent2();
+		parent2.setChild(sharedChild);
+
+		entityManager.merge(parent1);
+		entityManager.persist(parent2);
+
 		entityManager.getTransaction().commit();
 	}
+
+	private Long saveParent1() {
+		EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+		entityManager.getTransaction().begin();
+
+		Parent1 parent1 = new Parent1();
+		entityManager.persist(parent1);
+
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		return parent1.getId();
+	}
+
+
 }

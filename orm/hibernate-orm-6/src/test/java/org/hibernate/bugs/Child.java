@@ -1,16 +1,22 @@
 package org.hibernate.bugs;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.util.UUID;
 
 @Entity
-@Table(name = "TE_DM")
-public class DimensionMember {
+public class Child {
     @Id
+    @GeneratedValue(
+            strategy = GenerationType.TABLE,
+            generator = "idGenerator"
+    )
+    @TableGenerator(
+            name = "idGenerator",
+            table = "ID_GENERATOR",
+            pkColumnName = "ID_GENERATOR_ID",
+            valueColumnName = "ID_GENERATOR_VALUE"
+    )
     private Long id;
     @Column
     private String someData = UUID.randomUUID().toString();
